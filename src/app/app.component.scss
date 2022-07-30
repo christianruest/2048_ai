@@ -1,0 +1,40 @@
+$fields: 4;
+$field-dimension: 10rem;
+$field-margins: 1rem;
+$row-height: $field-dimension + 2 * $field-margins;
+$row-width: $fields * $field-dimension + 2 * $fields * $field-margins;
+
+$row-color: #d9c89a;
+$field-color: #e8d7b3;
+
+.wrapper {
+   text-align: center;
+}
+
+.row {
+    height: $row-height;
+    width: $row-width;
+    background-color: $row-color;
+    margin-left: auto;
+    margin-right: auto;
+} 
+
+.field {
+    width: $field-dimension;
+    margin: $field-margins;
+    float: left;
+    background-color: $field-color;
+    text-align: center;
+    height: $field-dimension;
+    vertical-align: middle;
+}
+
+.number {
+    font-size: 2rem;
+    padding: $field-dimension / 2 - 1.15rem 0;
+}
+
+.game-over {
+    font-size: 5rem;
+    color: red;
+}
