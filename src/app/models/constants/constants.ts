@@ -7,7 +7,7 @@ export const HIGHER_SCORE = 1;
 export const SAME_SCORE = -1;
 export const DID_MOVE = 1;
 export const DID_NOT_MOVE = -1;
-export const DID_NOT_MOVE_SCORE = -0.5;
+export const DID_NOT_MOVE_SCORE = -1;
 
 export const SUROUNDED_IN_CORNER = -0.5;
 export const SUROUNDED_ON_EDGE = -0.2;
@@ -17,13 +17,13 @@ export const NOT_SUROUNDED = 0;
 export const GAME_OVER = -1;
 export const GAME_NOT_OVER = 1;
 
-export const PREFERRED_DIRECTION = 0.1;
+export const PREFERRED_DIRECTION = 0.3;
 
 /**
  * game constants
  */
-export const GAME_ITERATIONS: number = 5000;
-export const PARALLEL_GAMES: number = 200;
+export const DEFAULT_GAME_ITERATIONS: number = 1000;
+export const PARALLEL_GAMES: number = 100;
 export const EPOCHS: number = 3;
 export const PERCENTAGE_4_TO_2: number = 0.62;
 export const FIELDS: number = 4;

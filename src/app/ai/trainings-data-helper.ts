@@ -7,6 +7,7 @@ import { Field } from '../models/field';
 import { Game } from '../models/game';
 import { MoveResult } from '../models/move-result';
 import { Tuple2 } from '../models/tuples/tuple2';
+import { CsvHelperService } from './csv-helper.service';
 import { AiGameOverCheck } from './helper-checks/ai-game-over-check';
 import { HasMovedCheck } from './helper-checks/has-moved-check';
 import { ScoreCalculatorCheck } from './helper-checks/score-calculator.check';
@@ -20,8 +21,35 @@ export class TrainingsDataHelper {
         return this.trainingsData.v1;
     }
 
+
+    public static setInput(input: number[][]) {
+        this.trainingsData.v1 = input;
+    }
+
     public static getOutput(): number[] {
         return this.trainingsData.v2;
+    }
+
+    public static setOutput(output: number[]): void {
+        this.trainingsData.v2 = output;
+    }
+
+    public static exportTrainingData() {
+        const csvContent = CsvHelperService.exportCsv(this.getInput(), this.getOutput());
+        const hiddenElement = document.createElement('a');
+        hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csvContent);
+        hiddenElement.target = '_blank';
+        hiddenElement.download = Date.now() + '.csv';
+        hiddenElement.click();
+    }
+
+    public static importTrainingData(input: string) {
+        CsvHelperService.importCsv(input);
+    }
+
+    public static resetEntries() {
+        this.trainingsData.v1 = [];
+        this.trainingsData.v2 = [];
     }
 
     public static addEntries(game: Game, moveDirection: Direction): void {
@@ -36,17 +64,17 @@ export class TrainingsDataHelper {
         this.addScore(this.calculateScore(game, simulationResult));
     }
 
-    public static addScore(nextMove: number): void {
+    public static addScore(score: number): void {
         if (this.trainingsData.v2 === undefined) {
             this.trainingsData.v2 = [];
         }
-        this.trainingsData.v2.push(this.normalizeDirection(nextMove))
+        this.trainingsData.v2.push(score);
     }
 
     public static createInputArray(game: Game, moveDirection: Direction) {
         let trainingsInput: number[] = [];
         trainingsInput = trainingsInput.concat(this.normalizeDirection(moveDirection));
-        trainingsInput = trainingsInput.concat(this.getGamefieldAsArray(game.gamefield));
+        // trainingsInput = trainingsInput.concat(this.getGamefieldAsArray(game.gamefield));
         const simulationResult: Tuple2<Direction, MoveResult> = {} as Tuple2<Direction, MoveResult>;
         simulationResult.v1 = moveDirection;
         simulationResult.v2 = GameSimulation.simulateMove(game, moveDirection);

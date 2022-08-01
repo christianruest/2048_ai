@@ -15,9 +15,10 @@ export class ScoreCalculatorCheck {
             return DID_NOT_MOVE_SCORE;
         }
 
-        const scoreIncrease: number = (simulationResult.v2.game.score - initialGame.score) / 10;
-        const surounded = SuroundedByGreatersCheck.check(simulationResult.v2.game.gamefield);
-        const intermediaryResult = scoreIncrease + surounded;
-        return simulationResult.v1 == Direction.DOWN ? intermediaryResult + PREFERRED_DIRECTION : intermediaryResult;
+        let score: number = 0.5
+        score += SuroundedByGreatersCheck.check(simulationResult.v2.game.gamefield);
+        score += (simulationResult.v2.game.score - initialGame.score) / 10;
+        score += simulationResult.v1 == Direction.DOWN ? PREFERRED_DIRECTION : 0;
+        return score;
     }
 }

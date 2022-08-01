@@ -33,7 +33,8 @@ export class AppComponent {
 
 
   constructor(
-    private _aiService: AiService
+    private _aiService: AiService,
+    private _autoPlayer: AutoPlayer
   ) {
     this.currentGame = GameControl.start();
   }
@@ -62,7 +63,7 @@ export class AppComponent {
         });
         break;
       case KeyCode.P:
-        AutoPlayer.playAutomagically();
+        this._autoPlayer.playAutomagically(false);
         break;
       case KeyCode.SPACE:
         if (this.isGameOver) {
@@ -71,20 +72,23 @@ export class AppComponent {
         }
         break;
       case KeyCode.T:
-        this._aiService.train();
+        this._aiService.train().then(() => {
+          console.log('...testing model in game, sit tight...');
+          this._autoPlayer.playAutomagically(true, 100);
+        });
         break;
       case KeyCode.D:
         this.demo();
         break;
       case KeyCode.S:
-        console.log('this is where it is trained with predictions')
+        this._autoPlayer.playAutomagically(true);
         break;
     }
   }
 
   private evaluateResult(result: MoveResult): void {
     this.updateUserInterface(result);
-    this.getPrediction().then(res => {
+    this._aiService.getPrediction(this.currentGame).then(res => {
       res.forEach(res => console.log(`Direction: ${Direction[res.v1]}: ${res.v2}`))
       console.log(TrainingsDataHelper.createInputArray(result.game, res[0].v1));
       console.log(TrainingsDataHelper.calculateScoreBasedOnPrediction(result.game, res[0].v1));
@@ -96,41 +100,11 @@ export class AppComponent {
     this.currentGame.score = result.game.score;
   }
 
-  private getPrediction(): Promise<Tuple2<Direction, number>[]> {
-    return new Promise(resolve => {
-      const predictionResult: Tuple2<Direction, number>[] = [];
-      let loopCount: number = 0;
-
-      for (let direction in Direction) {
-        if (isNaN(Number(direction))) {
-          return;
-        }
-
-        this._aiService.predict(TrainingsDataHelper.createInputArray(this.currentGame, Number(direction))).then(prediction => {
-          prediction.data().then(res => {
-            let prediction = Array.from(res)[0];
-            predictionResult.push({
-              v1: Number(direction),
-              v2: prediction
-            } as Tuple2<Direction, number>);
-
-            loopCount++;
-            if (loopCount === 4) {
-              predictionResult.sort((a, b) => b.v2 - a.v2)
-              resolve(predictionResult)
-            }
-          })
-        });
-      }
-    });
-  }
-
-
   private demo() {
     this.isGameOver = false;
     this.currentGame = GameControl.start();
     let timerId = setInterval(() => {
-      this.getPrediction().then(prediction => {
+      this._aiService.getPrediction(this.currentGame).then(prediction => {
         let i: number = 0;
         while (GameSimulation.simulateMove(this.currentGame, prediction[i].v1).hasMoved === false) {
           console.warn('impossible move prediction');
@@ -146,6 +120,16 @@ export class AppComponent {
         });
       })
     }, DEMO_TIMEOUT_IN_MS);
+  }
+
+  exportData() {
+    TrainingsDataHelper.exportTrainingData();
+  }
+
+  async importData(event: any) {
+    const file: File = event.target.files[0];
+    const fileContent = await file.text();
+    TrainingsDataHelper.importTrainingData(fileContent);
   }
 
 }

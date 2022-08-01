@@ -4,7 +4,8 @@
 
   <div class="row" *ngFor="let fields of currentGame.gamefield; index as i">
     <div class="field" *ngFor="let field of fields; index as j">
-      <div class="number" *ngIf="currentGame.gamefield[i][j]" [style.background-color]="getBackgroundColour(currentGame.gamefield[i][j].value)">
+      <div class="number" *ngIf="currentGame.gamefield[i][j]"
+        [style.background-color]="getBackgroundColour(currentGame.gamefield[i][j].value)">
         {{currentGame.gamefield[i][j].value}}
       </div>
     </div>
@@ -12,6 +13,12 @@
   <div class="game-over" *ngIf="isGameOver">
     <p>Game Over</p>
   </div>
+
+  <button (click)="exportData()">Export CSV</button>
+
+  <input #fileUploadSimple [accept]="'.csv'" type="file" class="file-input" (change)="importData($event)"
+    hidden="true">
+  <button (click)="fileUploadSimple.click()"> Import from csv</button>
 
   <div>
     <p>

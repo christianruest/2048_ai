@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 
 import { AppComponent } from './app.component';
 import { AiService } from './ai/ai-service';
+import { AutoPlayer } from './game-control/auto-player';
 
 @NgModule({
   declarations: [
@@ -12,7 +13,8 @@ import { AiService } from './ai/ai-service';
     BrowserModule
   ],
   providers: [
-    AiService
+    AiService,
+    AutoPlayer
   ],
   bootstrap: [AppComponent]
 })

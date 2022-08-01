@@ -1,8 +1,15 @@
+import { Injectable } from '@angular/core';
 import * as tf from '@tensorflow/tfjs';
 import { Tensor } from '@tensorflow/tfjs';
-import { TrainingsDataHelper } from './trainings-data-helper';
 import { EPOCHS } from '../models/constants/constants';
+import { Direction } from '../models/enums/direction';
+import { Game } from '../models/game';
+import { Tuple2 } from '../models/tuples/tuple2';
+import { TrainingsDataHelper } from './trainings-data-helper';
 
+@Injectable({
+    providedIn: 'root'
+  })
 export class AiService {
     private readonly model = tf.sequential();
 
@@ -11,15 +18,14 @@ export class AiService {
     }
 
     private createModel() {
-        this.model.add(tf.layers.dense({ units: 8, inputDim: 21, activation: 'sigmoid' }));
-        this.model.add(tf.layers.dense({ units: 8, activation: 'sigmoid' }))
+        this.model.add(tf.layers.dense({ units: 8, inputDim: 5, activation: 'relu' }));
+        this.model.add(tf.layers.dense({ units: 8, activation: 'relu' }));
         this.model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }));
 
         const learningRate = 1;
         const optimizer = tf.train.sgd(learningRate);
         this.model.compile({ loss: 'binaryCrossentropy', optimizer, metrics: ['accuracy'] });
     }
-
 
     train(): Promise<any> {
         const input: number[][] = TrainingsDataHelper.getInput();
@@ -42,13 +48,40 @@ export class AiService {
         })
     }
 
+    getPrediction(currentGame: Game): Promise<Tuple2<Direction, number>[]> {
+        return new Promise(resolve => {
+            const predictionResult: Tuple2<Direction, number>[] = [];
+            let loopCount: number = 0;
+
+            for (let direction in Direction) {
+                if (isNaN(Number(direction))) {
+                    return;
+                }
+
+                this.predict(TrainingsDataHelper.createInputArray(currentGame, Number(direction))).then(prediction => {
+                    prediction.data().then(res => {
+                        let prediction = Array.from(res)[0];
+                        predictionResult.push({
+                            v1: Number(direction),
+                            v2: prediction
+                        } as Tuple2<Direction, number>);
+
+                        loopCount++;
+                        if (loopCount === 4) {
+                            predictionResult.sort((a, b) => b.v2 - a.v2)
+                            resolve(predictionResult)
+                        }
+                    })
+                });
+            }
+        });
+    }
+
     predict(gamefield: number[]): Promise<Tensor> {
         return new Promise(resolve => {
             const prediction = <Tensor>this.model.predict(tf.tensor2d(gamefield, [1, gamefield.length]));
             resolve(prediction);
         })
     }
-
-
 
 }
