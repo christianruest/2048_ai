@@ -40,25 +40,22 @@ export class AutoPlayer {
     }
   }
 
-  private playInstance(smartMode: boolean, iterations?: number): Promise<any> {
-    return new Promise(resolve => {
-      if (this.iterationNumber % 10 == 0 || (iterations !== undefined && this.iterationNumber === iterations) || this.iterationNumber === DEFAULT_GAME_ITERATIONS) {
-        console.log(`iteration: ${this.iterationNumber}`);
-      }
-      this.iterationNumber++;
-      this.playAndBlockFurtherExecution(smartMode).then(() => {
-        const totalIterations = iterations === undefined ? DEFAULT_GAME_ITERATIONS : iterations;
-        if (this.iterationNumber <= totalIterations) {
-          this.playInstance(smartMode, iterations).then(() => resolve(''));
-        } else {
-          resolve('');
-        }
-      });
-    });
+  private async playInstance(smartMode: boolean, iterations?: number): Promise<any> {
+    if (this.iterationNumber % 10 == 0 || (iterations !== undefined && this.iterationNumber === iterations) || this.iterationNumber === DEFAULT_GAME_ITERATIONS) {
+      console.log(`iteration: ${this.iterationNumber}`);
+    }
+    this.iterationNumber++;
+    await this.playAndBlockFurtherExecution(smartMode);
+    const totalIterations = iterations === undefined ? DEFAULT_GAME_ITERATIONS : iterations;
+    if (this.iterationNumber <= totalIterations) {
+      await this.playInstance(smartMode, iterations);
+    } else {
+      return;
+    }
   }
 
-  private playAndBlockFurtherExecution(smartMode?: boolean): Promise<any> {
-    return new Promise((resolve) => {
+  private async playAndBlockFurtherExecution(smartMode?: boolean): Promise<any> {
+    return await new Promise((resolve) => {
       let game = GameControl.start();
 
       // game = this.playNumberOfMoves(game, this.getRandomInt(200))
@@ -66,48 +63,42 @@ export class AutoPlayer {
       let timerId = setInterval(() => {
         this.getNextMove(smartMode, game).then(nextMove => {
 
-          TrainingsDataHelper.addEntries(game, nextMove);
+          TrainingsDataHelper.addEntries(game);
 
-          GameControl.move(game, nextMove).then(result => {
-            game = result.game;
-            if (result.isGameOver) { //break out if Game over
-              this.sumOfMovesCount += result.game.movesCount;
-              this.sumOfScores += result.game.score;
-              clearInterval(timerId);
-              resolve('');
-            }
-          });
+          const result = GameControl.move(game, nextMove)
+          game = result.game;
+          if (result.isGameOver) { //break out if Game over
+            this.sumOfMovesCount += result.game.movesCount;
+            this.sumOfScores += result.game.score;
+            clearInterval(timerId);
+            resolve('');
+          }
         });
       }, TIMEOUT_IN_MS);
     })
   }
 
-  private getNextMove(smartMode: boolean, currentGame: Game): Promise<Direction> {
-    return new Promise(resolve => {
+  private async getNextMove(smartMode: boolean, currentGame: Game): Promise<Direction> {
+    if (!smartMode) {
+      return AutoPlayer.selectRandomNextMove();
+    }
 
-      if (!smartMode) {
-        resolve(AutoPlayer.selectRandomNextMove());
-      }
-
-      this._aiService.getPrediction(currentGame).then(prediction => {
-        let i: number = 0;
-        while (GameSimulation.simulateMove(currentGame, prediction[i].v1).hasMoved === false) {
-          i++;
-        }
-        resolve(prediction[i].v1);
-      });
-    });
+    const prediction = await this._aiService.getPrediction(currentGame)
+    let i: number = 0;
+    while (GameSimulation.simulateMove(currentGame, prediction[i].v1).hasMoved === false) {
+      i++;
+    }
+    return prediction[i].v1;
   }
 
   private static playNumberOfMoves(game: Game, numberOfMoves: number): Game {
     for (let i = 1; i < numberOfMoves; i++) {
-      GameControl.move(game, this.selectRandomNextMove()).then(res => {
-        game = res.game;
-        if (res.isGameOver) {
-          console.log(`oops, game over after ${i} plays and before training started`);
-          this.playNumberOfMoves(GameControl.start(), numberOfMoves - 5);
-        }
-      });
+      const res = GameControl.move(game, this.selectRandomNextMove())
+      game = res.game;
+      if (res.isGameOver) {
+        console.log(`oops, game over after ${i} plays and before training started`);
+        this.playNumberOfMoves(GameControl.start(), numberOfMoves - 5);
+      }
     }
     return game;
   }
@@ -121,9 +112,8 @@ export class AutoPlayer {
   }
 
   private resetStatistics(): void {
-    TrainingsDataHelper.resetEntries();
-    this.iterationNumber= 1;
-    this.sumOfMovesCount= 0;
-    this.sumOfScores= 0;
+    this.iterationNumber = 1;
+    this.sumOfMovesCount = 0;
+    this.sumOfScores = 0;
   }
 }

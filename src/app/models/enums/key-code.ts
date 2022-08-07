@@ -7,5 +7,6 @@ export enum KeyCode {
   P = 'p',
   T = 't',
   D = 'd',
-  S = 's'
+  S = 's',
+  R = 'r'
 }

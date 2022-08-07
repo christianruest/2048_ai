@@ -1,14 +1,36 @@
 import {
     MAX_INDEX,
-    SUROUNDED_IN_CORNER,
-    SUROUNDED_ON_EDGE,
-    SUROUNDED_ON_GAMEFIELD,
-    NOT_SUROUNDED
+    NOT_SUROUNDED, NOT_SUROUNDED_SCORE, SUROUNDED_IN_CORNER, SUROUNDED_IN_CORNER_SCORE, SUROUNDED_ON_EDGE, SUROUNDED_ON_EDGE_SCORE, SUROUNDED_ON_GAMEFIELD, SUROUNDED_ON_GAMEFIELD_SCORE
 } from '../../models/constants/constants';
-import { Field } from '../../models/field';
+import { Direction } from '../../models/enums/direction';
+import { Game } from '../../models/game';
+import { AbstractCheck } from './abstract-check';
 
-export class SuroundedByGreatersCheck {
-    public static check(gamefield: Field[][]): number {
+import { MoveResult } from '../../models/move-result';
+import { Tuple2 } from '../../models/tuples/tuple2';
+
+export class SuroundedByGreatersCheck extends AbstractCheck {
+
+    readonly RESULT_SCORE_MAP: Map<number, number> = new Map<number, number>([
+        [NOT_SUROUNDED, NOT_SUROUNDED_SCORE],
+        [SUROUNDED_IN_CORNER, SUROUNDED_IN_CORNER_SCORE],
+        [SUROUNDED_ON_EDGE, SUROUNDED_ON_EDGE_SCORE],
+        [SUROUNDED_ON_GAMEFIELD, SUROUNDED_ON_GAMEFIELD_SCORE]
+    ]);
+
+
+    evaluate(game: Game, simulationResult: Tuple2<Direction, MoveResult>): number {
+        const checkResult: number = this.check(game, simulationResult);
+        const score = this.RESULT_SCORE_MAP.get(checkResult);
+        if (Number.isNaN(score)) {
+            console.warn('unexpected check result occured');
+            return 0;
+        }
+        return Number(score);
+    }
+
+    check(game: Game, simulationResult: Tuple2<Direction, MoveResult>): number {
+        const gamefield = simulationResult.v2.game.gamefield;
         if (gamefield[0][0] != null &&
             gamefield[0][1] != null &&
             gamefield[1][0] != null &&

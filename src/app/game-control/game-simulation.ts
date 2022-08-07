@@ -34,15 +34,16 @@ export class GameSimulation {
      * @param direction 
      */
     public static simulateMove(game: Game, direction: Direction): MoveResult {
+        const simulationMode: boolean = true;
         switch (direction) {
             case Direction.UP:
-                return Move.up(game);
+                return Move.up(game, simulationMode);
             case Direction.DOWN:
-                return Move.down(game);
+                return Move.down(game, simulationMode);
             case Direction.LEFT:
-                return Move.left(game);
+                return Move.left(game, simulationMode);
             case Direction.RIGHT:
-                return Move.right(game);
+                return Move.right(game, simulationMode);
         }
     }
 }

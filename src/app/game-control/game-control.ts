@@ -29,30 +29,19 @@ export class GameControl {
      * @param game 
      * @param direction 
      */
-    public static move(game: Game, direction: Direction): Promise<MoveResult> {
-        return new Promise(resolve => {
-            let result: MoveResult;
-
-            switch (direction) {
-                case Direction.UP:
-                    result = Move.up(game);
-                    break;
-                case Direction.DOWN:
-                    result = Move.down(game);
-                    break;
-                case Direction.LEFT:
-                    result = Move.left(game);
-                    break;
-                case Direction.RIGHT:
-                    result = Move.right(game);
-                    break;
-            }
-            resolve(result);
-        })
-
+    public static move(game: Game, direction: Direction): MoveResult {
+        let result: MoveResult;
+        const simulationMode: boolean = false;
+        switch (direction) {
+            case Direction.UP:
+                return Move.up(game, simulationMode);
+            case Direction.DOWN:
+                return Move.down(game, simulationMode);
+            case Direction.LEFT:
+                return Move.left(game, simulationMode);
+            case Direction.RIGHT:
+                return Move.right(game, simulationMode);
+        }
     }
-
-
-
 
 }

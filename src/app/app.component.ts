@@ -1,5 +1,6 @@
 import { Component, HostListener } from '@angular/core';
 import { AiService } from './ai/ai-service';
+import { CsvHelperService } from './ai/csv-helper.service';
 import { TrainingsDataHelper } from './ai/trainings-data-helper';
 import { AutoPlayer } from './game-control/auto-player';
 import { GameControl } from './game-control/game-control';
@@ -12,7 +13,6 @@ import { Direction } from './models/enums/direction';
 import { KeyCode } from './models/enums/key-code';
 import { Game } from './models/game';
 import { MoveResult } from './models/move-result';
-import { Tuple2 } from './models/tuples/tuple2';
 
 @Component({
   selector: 'app-root',
@@ -37,30 +37,28 @@ export class AppComponent {
     private _autoPlayer: AutoPlayer
   ) {
     this.currentGame = GameControl.start();
+    this._aiService.preloadModel();
   }
 
   @HostListener('window:keydown', ['$event'])
   keyEvent(event: KeyboardEvent) {
+    let result: MoveResult = null;
     switch (event.key) {
       case KeyCode.UP_ARROW:
-        GameControl.move(this.currentGame, Direction.UP).then(result => {
-          this.evaluateResult(result);
-        });
+        result = GameControl.move(this.currentGame, Direction.UP)
+        this.evaluateResult(result);
         break;
       case KeyCode.DOWN_ARROW:
-        GameControl.move(this.currentGame, Direction.DOWN).then(result => {
-          this.evaluateResult(result);
-        });
+        result = GameControl.move(this.currentGame, Direction.DOWN)
+        this.evaluateResult(result);
         break;
       case KeyCode.LEFT_ARROW:
-        GameControl.move(this.currentGame, Direction.LEFT).then(result => {
-          this.evaluateResult(result);
-        });
+        result = GameControl.move(this.currentGame, Direction.LEFT)
+        this.evaluateResult(result);
         break;
       case KeyCode.RIGHT_ARROW:
-        GameControl.move(this.currentGame, Direction.RIGHT).then(result => {
-          this.evaluateResult(result);
-        });
+        result = GameControl.move(this.currentGame, Direction.RIGHT)
+        this.evaluateResult(result);
         break;
       case KeyCode.P:
         this._autoPlayer.playAutomagically(false);
@@ -83,6 +81,9 @@ export class AppComponent {
       case KeyCode.S:
         this._autoPlayer.playAutomagically(true);
         break;
+      case KeyCode.R:
+        TrainingsDataHelper.resetTestdata();
+        break;
     }
   }
 
@@ -90,8 +91,13 @@ export class AppComponent {
     this.updateUserInterface(result);
     this._aiService.getPrediction(this.currentGame).then(res => {
       res.forEach(res => console.log(`Direction: ${Direction[res.v1]}: ${res.v2}`))
-      console.log(TrainingsDataHelper.createInputArray(result.game, res[0].v1));
-      console.log(TrainingsDataHelper.calculateScoreBasedOnPrediction(result.game, res[0].v1));
+      console.log(TrainingsDataHelper.createInputArray(result.game));
+      let scoreArray: number[] = [];
+      for (let i = 0; i < 4; i++) {
+        scoreArray.push(TrainingsDataHelper.calculateScoreBasedOnPrediction(result.game, res[i].v1));
+      }
+      scoreArray = TrainingsDataHelper.normalizeValues(scoreArray);
+      console.log(scoreArray);
     });
   }
 
@@ -111,25 +117,24 @@ export class AppComponent {
           i++;
         }
 
-        GameControl.move(this.currentGame, prediction[i].v1).then((result) => {
-          this.currentGame = result.game;
-          if (result.isGameOver) { //in move there is no new field, hence it will not be game over -> also to be checked in the simulated moves
-            this.isGameOver = true;
-            clearInterval(timerId);
-          }
-        });
+        const result = GameControl.move(this.currentGame, prediction[i].v1)
+        this.currentGame = result.game;
+        if (result.isGameOver) { //in move there is no new field, hence it will not be game over -> also to be checked in the simulated moves
+          this.isGameOver = true;
+          clearInterval(timerId);
+        }
       })
     }, DEMO_TIMEOUT_IN_MS);
   }
 
   exportData() {
-    TrainingsDataHelper.exportTrainingData();
+    CsvHelperService.exportTrainingData();
   }
 
   async importData(event: any) {
     const file: File = event.target.files[0];
     const fileContent = await file.text();
-    TrainingsDataHelper.importTrainingData(fileContent);
+    CsvHelperService.importTrainingData(fileContent);
   }
 
 }

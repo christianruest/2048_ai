@@ -1,5 +1,4 @@
 import * as _ from 'lodash';
-import { GameOverCheck } from './game-over-check';
 import {
     FIELDS,
     MAX_INDEX
@@ -8,11 +7,12 @@ import { Direction } from '../../models/enums/direction';
 import { Field } from '../../models/field';
 import { Game } from '../../models/game';
 import { MoveResult } from '../../models/move-result';
-import { NewFieldCreator} from './new-field-creator';
-import { FieldResetter} from './field-resetter';
+import { FieldResetter } from './field-resetter';
+import { GameOverCheck } from './game-over-check';
+import { NewFieldCreator } from './new-field-creator';
 
 export class Move {
-    public static up(inputGame: Game): MoveResult {
+    public static up(inputGame: Game, isSimulation: boolean): MoveResult {
         let result: MoveResult = {} as MoveResult;
         result.hasMoved = false;
         let game = _.cloneDeep(inputGame);
@@ -40,13 +40,13 @@ export class Move {
                 }
             }
         }
-        Move.executeAfterMoveOperations(result);
+        Move.executeAfterMoveOperations(result, isSimulation);
         return result;
     }
-    
-    
 
-    public static down(inputGame: Game): MoveResult {
+
+
+    public static down(inputGame: Game, isSimulation: boolean): MoveResult {
         let result: MoveResult = {} as MoveResult;
         result.hasMoved = false;
         let game = _.cloneDeep(inputGame);
@@ -74,11 +74,11 @@ export class Move {
                 }
             }
         }
-        Move.executeAfterMoveOperations(result);
+        Move.executeAfterMoveOperations(result, isSimulation);
         return result;
     }
 
-    public static left(inputGame: Game): MoveResult {
+    public static left(inputGame: Game, isSimulation: boolean): MoveResult {
         let result: MoveResult = {} as MoveResult;
         result.hasMoved = false;
         let game = _.cloneDeep(inputGame);
@@ -106,11 +106,11 @@ export class Move {
                 }
             }
         }
-        Move.executeAfterMoveOperations(result);
+        Move.executeAfterMoveOperations(result, isSimulation);
         return result;
     }
 
-    public static right(inputGame: Game): MoveResult {
+    public static right(inputGame: Game, isSimulation: boolean): MoveResult {
         let result: MoveResult = {} as MoveResult;
         result.hasMoved = false;
         let game = _.cloneDeep(inputGame);
@@ -138,7 +138,7 @@ export class Move {
                 }
             }
         }
-        Move.executeAfterMoveOperations(result);
+        Move.executeAfterMoveOperations(result, isSimulation);
         return result;
     }
 
@@ -172,12 +172,13 @@ export class Move {
         }
     }
 
-    private static executeAfterMoveOperations(result: MoveResult) {
+    private static executeAfterMoveOperations(result: MoveResult, isSimulation: boolean) {
+        const gameField: Field[][] = isSimulation ? _.cloneDeep(result.game.gamefield) : result.game.gamefield;
         if (result.hasMoved) {
-            this.createNewFieldAndReset(result.game.gamefield);
+            this.createNewFieldAndReset(gameField);
             result.game.movesCount++;
         }
-        result.isGameOver = GameOverCheck.check(result.game.gamefield);
+        result.isGameOver = GameOverCheck.check(gameField);
     }
 
     private static createNewFieldAndReset(gamefield: Field[][]): void {
